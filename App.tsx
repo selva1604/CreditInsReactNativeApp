@@ -1,10 +1,13 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import DashboardScreen from './src/screens/DashboardScreen';
 import PaymentScreen from './src/screens/PaymentScreen';
 import InsuranceProvidersScreen from './src/screens/InsuranceProvidersScreen';
+import LoginScreen from './src/screens/LoginScreen';
+import { AuthSession, formatIndianMobile, logout, restoreSession } from './src/services/authService';
+import { colors } from './src/theme';
 import {
   CreditCard,
   InsuranceProvider,
@@ -13,7 +16,7 @@ import {
   PaymentScope,
 } from './src/types';
 import { applyPayments, loadCards } from './src/services/cardService';
-import { showMessage } from './src/utils/notify';
+import { confirmAction, showMessage } from './src/utils/notify';
 
 /**
  * Minimal two-screen navigation. When the app grows beyond a few screens,
@@ -25,15 +28,36 @@ type Route =
   | { name: 'insurance'; type: InsuranceType };
 
 export default function App() {
+  /** undefined = still checking for a saved session, null = logged out */
+  const [session, setSession] = useState<AuthSession | null | undefined>(undefined);
   const [cards, setCards] = useState<CreditCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [route, setRoute] = useState<Route>({ name: 'dashboard' });
 
   useEffect(() => {
+    restoreSession()
+      .then(setSession)
+      .catch(() => setSession(null));
+  }, []);
+
+  // Load the user's cards whenever someone logs in.
+  const token = session?.token;
+  useEffect(() => {
+    if (!token) return;
+    setLoading(true);
     loadCards()
       .then(setCards)
       .catch(() => Alert.alert('Error', 'Could not load your cards.'))
       .finally(() => setLoading(false));
+  }, [token]);
+
+  const handleLogout = useCallback(async () => {
+    const ok = await confirmAction('Log out', 'Are you sure you want to log out?', 'Log out');
+    if (!ok) return;
+    await logout();
+    setCards([]);
+    setRoute({ name: 'dashboard' });
+    setSession(null);
   }, []);
 
   const refresh = useCallback(async () => {
@@ -57,6 +81,26 @@ export default function App() {
     showMessage(provider.name, 'Policy renewal with this insurance company is coming soon.');
   }, []);
 
+  if (session === undefined) {
+    return (
+      <SafeAreaProvider>
+        <StatusBar style="dark" />
+        <View style={[styles.fill, styles.center]}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      </SafeAreaProvider>
+    );
+  }
+
+  if (session === null) {
+    return (
+      <SafeAreaProvider>
+        <StatusBar style="dark" />
+        <LoginScreen onLoggedIn={setSession} />
+      </SafeAreaProvider>
+    );
+  }
+
   return (
     <SafeAreaProvider>
       <StatusBar style="dark" />
@@ -68,6 +112,8 @@ export default function App() {
           onRefresh={refresh}
           onPay={(scope) => setRoute({ name: 'payment', scope })}
           onRenewInsurance={(type) => setRoute({ name: 'insurance', type })}
+          phoneLabel={formatIndianMobile(session.phone)}
+          onLogout={handleLogout}
         />
       </View>
       {route.name === 'payment' && (
@@ -97,5 +143,6 @@ export default function App() {
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
+  center: { alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
   hidden: { display: 'none' },
 });

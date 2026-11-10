@@ -29,9 +29,20 @@ interface Props {
   onRefresh: () => Promise<void>;
   onPay: (scope: PaymentScope) => void;
   onRenewInsurance: (type: InsuranceType) => void;
+  /** Logged-in mobile number, already formatted for display */
+  phoneLabel: string;
+  onLogout: () => void;
 }
 
-export default function DashboardScreen({ cards, loading, onRefresh, onPay, onRenewInsurance }: Props) {
+export default function DashboardScreen({
+  cards,
+  loading,
+  onRefresh,
+  onPay,
+  onRenewInsurance,
+  phoneLabel,
+  onLogout,
+}: Props) {
   const { width: screenWidth } = useWindowDimensions();
   const cardWidth = Math.min(screenWidth - spacing.lg * 2 - 24, 380);
   const snapInterval = cardWidth + CARD_GAP;
@@ -71,6 +82,9 @@ export default function DashboardScreen({ cards, loading, onRefresh, onPay, onRe
     return (
       <SafeAreaView style={[styles.safe, styles.center]}>
         <Text style={styles.empty}>No credit cards linked yet.</Text>
+        <Pressable onPress={onLogout} hitSlop={8} style={{ marginTop: spacing.lg }}>
+          <Text style={styles.logoutText}>Log out</Text>
+        </Pressable>
       </SafeAreaView>
     );
   }
@@ -86,8 +100,18 @@ export default function DashboardScreen({ cards, loading, onRefresh, onPay, onRe
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />}
       >
         <View style={styles.titleRow}>
-          <Text style={styles.greeting}>Welcome back 👋</Text>
-          <Text style={styles.title}>My Credit Cards</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.greeting}>Welcome back 👋 {phoneLabel}</Text>
+            <Text style={styles.title}>My Credit Cards</Text>
+          </View>
+          <Pressable
+            onPress={onLogout}
+            hitSlop={8}
+            style={({ pressed }) => [styles.logoutButton, pressed && { opacity: 0.7 }]}
+            accessibilityLabel="Log out"
+          >
+            <Text style={styles.logoutText}>Log out</Text>
+          </Pressable>
         </View>
 
         <SummaryHeader cards={cards} onRenewInsurance={onRenewInsurance} />
@@ -150,7 +174,22 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
   center: { alignItems: 'center', justifyContent: 'center' },
   content: { paddingBottom: spacing.xl * 2 },
-  titleRow: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.lg },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.lg,
+  },
+  logoutButton: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  logoutText: { color: colors.danger, fontSize: 13, fontWeight: '700' },
   greeting: { fontSize: 14, color: colors.textMuted },
   title: { fontSize: 26, fontWeight: '800', color: colors.text, marginTop: 2 },
   payAll: {

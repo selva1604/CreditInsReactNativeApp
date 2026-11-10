@@ -14,7 +14,14 @@
       "package": "com.creditins.app"
     },
     "plugins": [
-      "expo-asset"
+      "expo-asset",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "CreditIns needs access to your photos so you can choose a profile picture.",
+          "cameraPermission": "CreditIns needs access to your camera so you can take a profile picture."
+        }
+      ]
     ]
   }
 }

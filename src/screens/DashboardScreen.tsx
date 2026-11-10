@@ -20,6 +20,7 @@ import SummaryHeader from '../components/SummaryHeader';
 import CreditCardItem from '../components/CreditCardItem';
 import CardDetails from '../components/CardDetails';
 import UpcomingDues from '../components/UpcomingDues';
+import Avatar from '../components/Avatar';
 
 const CARD_GAP = 12;
 
@@ -29,9 +30,12 @@ interface Props {
   onRefresh: () => Promise<void>;
   onPay: (scope: PaymentScope) => void;
   onRenewInsurance: (type: InsuranceType) => void;
-  /** Logged-in mobile number, already formatted for display */
-  phoneLabel: string;
-  onLogout: () => void;
+  /** User's name, or their formatted mobile number if no name is set */
+  displayName: string;
+  /** Name used for avatar initials (empty if not set) */
+  profileName: string;
+  photoUri: string | null;
+  onOpenProfile: () => void;
 }
 
 export default function DashboardScreen({
@@ -40,8 +44,10 @@ export default function DashboardScreen({
   onRefresh,
   onPay,
   onRenewInsurance,
-  phoneLabel,
-  onLogout,
+  displayName,
+  profileName,
+  photoUri,
+  onOpenProfile,
 }: Props) {
   const { width: screenWidth } = useWindowDimensions();
   const cardWidth = Math.min(screenWidth - spacing.lg * 2 - 24, 380);
@@ -82,8 +88,8 @@ export default function DashboardScreen({
     return (
       <SafeAreaView style={[styles.safe, styles.center]}>
         <Text style={styles.empty}>No credit cards linked yet.</Text>
-        <Pressable onPress={onLogout} hitSlop={8} style={{ marginTop: spacing.lg }}>
-          <Text style={styles.logoutText}>Log out</Text>
+        <Pressable onPress={onOpenProfile} hitSlop={8} style={{ marginTop: spacing.lg }}>
+          <Text style={styles.profileLink}>My Profile</Text>
         </Pressable>
       </SafeAreaView>
     );
@@ -101,16 +107,18 @@ export default function DashboardScreen({
       >
         <View style={styles.titleRow}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.greeting}>Welcome back 👋 {phoneLabel}</Text>
+            <Text style={styles.greeting} numberOfLines={1}>
+              Welcome back, {displayName} 👋
+            </Text>
             <Text style={styles.title}>My Credit Cards</Text>
           </View>
           <Pressable
-            onPress={onLogout}
+            onPress={onOpenProfile}
             hitSlop={8}
-            style={({ pressed }) => [styles.logoutButton, pressed && { opacity: 0.7 }]}
-            accessibilityLabel="Log out"
+            style={({ pressed }) => [pressed && { opacity: 0.7 }]}
+            accessibilityLabel="Open my profile"
           >
-            <Text style={styles.logoutText}>Log out</Text>
+            <Avatar name={profileName} photoUri={photoUri} size={44} />
           </Pressable>
         </View>
 
@@ -181,15 +189,7 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
     paddingBottom: spacing.lg,
   },
-  logoutButton: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    borderRadius: radius.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  logoutText: { color: colors.danger, fontSize: 13, fontWeight: '700' },
+  profileLink: { color: colors.primary, fontSize: 14, fontWeight: '700' },
   greeting: { fontSize: 14, color: colors.textMuted },
   title: { fontSize: 26, fontWeight: '800', color: colors.text, marginTop: 2 },
   payAll: {

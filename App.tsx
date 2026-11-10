@@ -18,7 +18,7 @@ import {
   PaymentScope,
 } from './src/types';
 import { applyPayments, loadCards } from './src/services/cardService';
-import { confirmAction, showMessage } from './src/utils/notify';
+import { showMessage } from './src/utils/notify';
 
 /**
  * Minimal two-screen navigation. When the app grows beyond a few screens,
@@ -68,9 +68,8 @@ export default function App() {
     setProfile(await saveProfile(next));
   }, []);
 
+  // Confirmation is handled by the popup on the profile screen.
   const handleLogout = useCallback(async () => {
-    const ok = await confirmAction('Log out', 'Are you sure you want to log out?', 'Log out');
-    if (!ok) return;
     await logout();
     setCards([]);
     setProfile(null);

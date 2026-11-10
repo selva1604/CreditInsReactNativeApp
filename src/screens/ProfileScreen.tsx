@@ -15,10 +15,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, radius, spacing } from '../theme';
 import Avatar from '../components/Avatar';
+import ConfirmDialog from '../components/ConfirmDialog';
 import { NAME_MAX_LENGTH, UserProfile, validateName } from '../services/profileService';
 import { formatIndianMobile } from '../services/authService';
 import { PhotoPermissionError, PhotoSource, pickProfilePhoto } from '../utils/pickPhoto';
-import { confirmAction, showMessage } from '../utils/notify';
+import { showMessage } from '../utils/notify';
 
 interface Props {
   profile: UserProfile;
@@ -26,8 +27,11 @@ interface Props {
   loggedInAt: string;
   onBack: () => void;
   onSave: (profile: UserProfile) => Promise<void>;
-  onLogout: () => void;
+  /** Called after the user confirms in the logout popup */
+  onLogout: () => Promise<void>;
 }
+
+type ConfirmKind = 'logout' | 'removePhoto';
 
 export default function ProfileScreen({ profile, loggedInAt, onBack, onSave, onLogout }: Props) {
   const [name, setName] = useState(profile.name);
@@ -35,16 +39,20 @@ export default function ProfileScreen({ profile, loggedInAt, onBack, onSave, onL
   const [savingName, setSavingName] = useState(false);
   const [photoBusy, setPhotoBusy] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [confirm, setConfirm] = useState<ConfirmKind | null>(null);
+  const [confirmBusy, setConfirmBusy] = useState(false);
 
   useEffect(() => {
     if (Platform.OS !== 'android') return;
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
-      if (sheetOpen) setSheetOpen(false);
+      if (confirm) {
+        if (!confirmBusy) setConfirm(null);
+      } else if (sheetOpen) setSheetOpen(false);
       else onBack();
       return true;
     });
     return () => sub.remove();
-  }, [onBack, sheetOpen]);
+  }, [onBack, sheetOpen, confirm, confirmBusy]);
 
   const nameChanged = name.trim() !== profile.name;
 
@@ -80,17 +88,31 @@ export default function ProfileScreen({ profile, loggedInAt, onBack, onSave, onL
     }
   };
 
-  const removePhoto = async () => {
+  const askRemovePhoto = () => {
     setSheetOpen(false);
-    const ok = await confirmAction('Remove photo', 'Remove your profile picture?', 'Remove');
-    if (!ok) return;
-    setPhotoBusy(true);
+    // iOS can't show a new popup while the sheet is still closing, so wait for it.
+    setTimeout(() => setConfirm('removePhoto'), Platform.OS === 'ios' ? 350 : 0);
+  };
+
+  const handleConfirm = async () => {
+    setConfirmBusy(true);
     try {
-      await onSave({ ...profile, photoUri: null });
+      if (confirm === 'logout') {
+        await onLogout(); // this screen unmounts once logged out
+        return;
+      }
+      if (confirm === 'removePhoto') {
+        await onSave({ ...profile, photoUri: null });
+      }
+      setConfirm(null);
     } catch {
-      showMessage('Photo not removed', 'Please try again.');
+      setConfirm(null);
+      showMessage(
+        confirm === 'logout' ? 'Could not log out' : 'Photo not removed',
+        'Something went wrong. Please try again.',
+      );
     } finally {
-      setPhotoBusy(false);
+      setConfirmBusy(false);
     }
   };
 
@@ -189,7 +211,7 @@ export default function ProfileScreen({ profile, loggedInAt, onBack, onSave, onL
           </View>
 
           <Pressable
-            onPress={onLogout}
+            onPress={() => setConfirm('logout')}
             style={({ pressed }) => [styles.logoutButton, pressed && { opacity: 0.85 }]}
           >
             <Text style={styles.logoutText}>Log out</Text>
@@ -210,13 +232,36 @@ export default function ProfileScreen({ profile, loggedInAt, onBack, onSave, onL
               label={Platform.OS === 'web' ? 'Upload photo' : 'Choose from gallery'}
               onPress={() => changePhoto('library')}
             />
-            {profile.photoUri && <SheetOption icon="🗑️" label="Remove photo" danger onPress={removePhoto} />}
+            {profile.photoUri && <SheetOption icon="🗑️" label="Remove photo" danger onPress={askRemovePhoto} />}
             <Pressable onPress={() => setSheetOpen(false)} style={styles.sheetCancel}>
               <Text style={styles.sheetCancelText}>Cancel</Text>
             </Pressable>
           </Pressable>
         </Pressable>
       </Modal>
+
+      <ConfirmDialog
+        visible={confirm === 'logout'}
+        icon="🚪"
+        title="Log out?"
+        message="You'll need to verify your mobile number with an OTP to log in again."
+        confirmLabel="Log out"
+        destructive
+        busy={confirmBusy}
+        onConfirm={handleConfirm}
+        onCancel={() => setConfirm(null)}
+      />
+      <ConfirmDialog
+        visible={confirm === 'removePhoto'}
+        icon="🗑️"
+        title="Remove profile picture?"
+        message="Your initials will be shown instead."
+        confirmLabel="Remove"
+        destructive
+        busy={confirmBusy}
+        onConfirm={handleConfirm}
+        onCancel={() => setConfirm(null)}
+      />
     </SafeAreaView>
   );
 }

@@ -35,3 +35,6 @@ Thumbs.db
 
 # typescript
 *.tsbuildinfo
+
+# manual upload bundle
+payvy-web.zip

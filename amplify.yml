@@ -3,7 +3,13 @@ frontend:
   phases:
     preBuild:
       commands:
-        - npm ci
+        # Expo SDK 52 / React Native 0.76 need Node 18+; pin Node 20 LTS
+        # so the build never falls back to an older default on the build image.
+        - nvm install 20
+        - nvm use 20
+        - node -v
+        - npm -v
+        - npm ci --no-audit --no-fund
     build:
       commands:
         - npm run build

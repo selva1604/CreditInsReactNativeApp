@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, radius, spacing } from '../theme';
+import Logo from '../components/Logo';
 import {
   AuthError,
   AuthSession,
@@ -135,10 +136,9 @@ export default function LoginScreen({ onLoggedIn }: Props) {
     <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView style={styles.fill} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <View style={styles.logo}>
-            <Text style={styles.logoText}>💳</Text>
+          <View style={styles.brand}>
+            <Logo size={72} wordmark="column" />
           </View>
-          <Text style={styles.brand}>CreditIns</Text>
 
           {step === 'phone' ? (
             <>
@@ -264,24 +264,7 @@ const styles = StyleSheet.create({
     maxWidth: 440,
     alignSelf: 'center',
   },
-  logo: {
-    width: 64,
-    height: 64,
-    borderRadius: radius.lg,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'center',
-  },
-  logoText: { fontSize: 30 },
-  brand: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: colors.text,
-    textAlign: 'center',
-    marginTop: spacing.sm,
-    marginBottom: spacing.xl * 1.5,
-  },
+  brand: { alignItems: 'center', marginBottom: spacing.xl * 1.5 },
   title: { fontSize: 22, fontWeight: '800', color: colors.text },
   subtitle: { fontSize: 14, color: colors.textMuted, marginTop: spacing.xs, lineHeight: 20 },
   bold: { fontWeight: '700', color: colors.text },

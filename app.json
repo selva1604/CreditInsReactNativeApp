@@ -1,25 +1,43 @@
 {
   "expo": {
-    "name": "CreditIns",
+    "name": "Payvy",
     "slug": "creditins",
     "version": "1.0.0",
     "orientation": "portrait",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F4F6FB"
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.creditins.app"
     },
     "android": {
-      "package": "com.creditins.app"
+      "package": "com.creditins.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundImage": "./assets/adaptive-icon-background.png",
+        "backgroundColor": "#4F46E5"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "name": "Payvy",
+      "shortName": "Payvy",
+      "themeColor": "#4F46E5",
+      "backgroundColor": "#F4F6FB"
     },
     "plugins": [
       "expo-asset",
       [
         "expo-image-picker",
         {
-          "photosPermission": "CreditIns needs access to your photos so you can choose a profile picture.",
-          "cameraPermission": "CreditIns needs access to your camera so you can take a profile picture."
+          "photosPermission": "Payvy needs access to your photos so you can choose a profile picture.",
+          "cameraPermission": "Payvy needs access to your camera so you can take a profile picture."
         }
       ]
     ]

@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "CreditIns",
+    "slug": "creditins",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.creditins.app"
+    },
+    "android": {
+      "package": "com.creditins.app"
+    },
+    "plugins": [
+      "expo-asset"
+    ]
+  }
+}
